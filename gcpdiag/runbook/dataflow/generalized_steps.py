@@ -33,6 +33,10 @@ class ValidSdk(runbook.Step):
         op.get(flags.DATAFLOW_JOB_ID),
         op.get(flags.JOB_REGION),
     )
+    if job is None:
+      op.add_skipped(resource=None, reason='Job not found.')
+      return
+
     if job.sdk_support_status != 'SUPPORTED':
       op.add_failed(
           resource=None,

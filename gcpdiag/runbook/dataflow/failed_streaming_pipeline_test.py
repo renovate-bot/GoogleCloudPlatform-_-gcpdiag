@@ -160,9 +160,9 @@ class FailedStreamingPipelineStartTest(FailedStreamingPipelineStepTestBase):
     with op.operator_context(self.operator):
       self.operator.set_step(step)
       step.execute()
-    self.assertEqual(mock_is_enabled.call_count, 2)
+    self.assertEqual(mock_is_enabled.call_count, 1)
     mock_is_enabled.assert_called_with(DUMMY_PROJECT_ID, 'dataflow')
-    self.assertEqual(self.mock_interface.add_skipped.call_count, 2)
+    self.assertEqual(self.mock_interface.add_skipped.call_count, 1)
 
   @mock.patch('gcpdiag.queries.dataflow.get_job', return_value=None)
   def test_start_step_job_not_found(self, mock_get_job):
@@ -367,8 +367,10 @@ class JobLogsVisibleTest(FailedStreamingPipelineStepTestBase):
       self.operator.set_step(step)
       step.execute()
     mock_logs_excluded.assert_called_once_with(DUMMY_PROJECT_ID)
-    self.mock_interface.add_ok.assert_called_once()
-    self.mock_interface.add_failed.assert_not_called()
+    self.mock_interface.add_ok.assert_not_called()
+    self.assertEqual(self.mock_interface.add_failed.call_args[1]['resource'],
+                     None)
+    self.mock_interface.add_failed.assert_called_once()
 
   @mock.patch('gcpdiag.queries.dataflow.logs_excluded',
               side_effect=[True, None])
@@ -377,10 +379,8 @@ class JobLogsVisibleTest(FailedStreamingPipelineStepTestBase):
     with op.operator_context(self.operator):
       self.operator.set_step(step)
       step.execute()
-    self.assertEqual(mock_logs_excluded.call_count, 2)
+    self.assertEqual(mock_logs_excluded.call_count, 1)
     self.mock_interface.add_failed.assert_called_once()
-    self.assertEqual(self.mock_interface.add_failed.call_args[1]['resource'],
-                     None)
     self.mock_interface.add_ok.assert_not_called()
 
   @mock.patch('gcpdiag.queries.dataflow.logs_excluded', return_value=True)

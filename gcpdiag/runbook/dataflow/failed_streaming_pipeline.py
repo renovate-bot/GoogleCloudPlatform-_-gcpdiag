@@ -104,6 +104,7 @@ class FailedStreamingPipelineStart(runbook.StartStep):
 
     if not apis.is_enabled(op.get(flags.PROJECT_ID), 'dataflow'):
       op.add_skipped(project, reason='Dataflow API is not enabled')
+      return
 
     job = dataflow.get_job(op.get(flags.PROJECT_ID), job_id, job_region)
     if job is not None:  # default=None
@@ -158,7 +159,7 @@ class JobState(runbook.Step):
     )
 
     if job.state == 'JOB_STATE_FAILED':
-      log_filter = ['severity=WARNING']
+      log_filter = ['severity>=WARNING']
       project_id = op.get(flags.PROJECT_ID)
       log_name = 'log_id("dataflow.googleapis.com/worker")'
       project_logs = {}
@@ -262,13 +263,14 @@ class JobLogsVisible(runbook.Step):
 
   def execute(self):
     """Checks if a Dataflow job has visible logs."""
+    excluded = dataflow.logs_excluded(op.get(flags.PROJECT_ID))
 
-    if not dataflow.logs_excluded(op.get(flags.PROJECT_ID)):
+    if excluded is False:
       op.add_ok(
           resource=crm.get_project(op.get(flags.PROJECT_ID)),
           reason='Dataflow Logs are not excluded',
       )
-    elif dataflow.logs_excluded(op.get(flags.PROJECT_ID)) is None:
+    elif excluded is None:
       op.add_failed(
           resource=None,
           reason='logging API is disabled',
