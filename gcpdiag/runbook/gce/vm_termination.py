@@ -213,6 +213,9 @@ class TerminationOperationType(runbook.Gateway):
         stop_gateway.stop_account = get_path(operations[0], ('user'))
         stop_gateway.operation_name = get_path(operations[0], ('name'))
         self.add_child(stop_gateway)
+    else:
+      op.add_skipped(project,
+                     reason='No matching operations found in time window.')
 
 
 class ManagedInstanceGroupRecreation(runbook.Step):
